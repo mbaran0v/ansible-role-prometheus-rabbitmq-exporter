@@ -1,0 +1,16 @@
+[Unit]
+Description=Prometheus RabbitMQ Exporter
+Documentation=https://github.com/kbudde/rabbitmq_exporter
+After=network.target
+
+[Service]
+Type=simple
+User={{ rabbitmq_exporter_system_user }}
+Group={{ rabbitmq_exporter_system_group }}
+EnvironmentFile={{ rabbitmq_exporter_shared_dir }}/config
+ExecStart={{ rabbitmq_exporter_release_dir }}/rabbitmq_exporter
+SyslogIdentifier=rabbitmq_exporter
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

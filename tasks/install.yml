@@ -1,0 +1,93 @@
+---
+
+- name: Create the rabbitmq_exporter group
+  group:
+    name: "{{ rabbitmq_exporter_system_group }}"
+    state: present
+    system: true
+
+- name: Create the rabbitmq_exporter user
+  user:
+    name: "{{ rabbitmq_exporter_system_user }}"
+    groups: "{{ rabbitmq_exporter_system_group }}"
+    append: true
+    shell: /usr/sbin/nologin
+    system: true
+    createhome: false
+    home: "{{ rabbitmq_exporter_root_dir }}"
+
+- name: create rabbitmq_exporter directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ rabbitmq_exporter_system_user }}"
+    group: "{{ rabbitmq_exporter_system_group }}"
+    mode: 0750
+  with_items:
+    - "{{ rabbitmq_exporter_root_dir }}"
+    - "{{ rabbitmq_exporter_root_dir }}/tmp"
+
+- name: download archive to temporary folder
+  get_url:
+    url: "{{ rabbitmq_exporter_download_url }}"
+    dest: "{{ rabbitmq_exporter_root_dir }}/tmp/{{ rabbitmq_exporter_archive_name }}"
+    remote_src: true
+  register: _download_archive
+  until: _download_archive is succeeded
+  retries: 5
+  delay: 2
+
+- name: unpack binaries
+  unarchive:
+    src: "{{ rabbitmq_exporter_root_dir }}/tmp/{{ rabbitmq_exporter_archive_name }}"
+    dest: "{{ rabbitmq_exporter_root_dir }}/tmp"
+    remote_src: yes
+    creates: "{{ rabbitmq_exporter_root_dir }}/tmp/{{ rabbitmq_exporter_extracted_dir }}/rabbitmq_exporter"
+
+- name: initialize the deploy root and gather facts
+  deploy_helper:
+    path: "{{ rabbitmq_exporter_root_dir }}"
+    release: "{{ rabbitmq_exporter_version }}"
+    state: present
+
+- name: create release directory
+  file:
+    dest: "{{ deploy_helper.new_release_path }}"
+    state: directory
+    owner: "{{ rabbitmq_exporter_system_user }}"
+    group: "{{ rabbitmq_exporter_system_group }}"
+    mode: 0750
+
+- name: propagate binaries
+  command: mv {{ rabbitmq_exporter_root_dir }}/tmp/{{ rabbitmq_exporter_extracted_dir }}/{{ item }} {{ deploy_helper.new_release_path }}
+  tags: skip_ansible_lint
+  with_items:
+    - rabbitmq_exporter
+
+- name: create config
+  template:
+    src: config.j2
+    dest: "{{ deploy_helper.shared_path }}/config"
+    owner: root
+    group: "{{ rabbitmq_exporter_system_group }}"
+    mode: 0750
+  notify:
+    - restart rabbitmq_exporter
+
+- name: create systemd service unit
+  template:
+    src: rabbitmq_exporter.service.j2
+    dest: /etc/systemd/system/rabbitmq_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart rabbitmq_exporter
+
+- name: finalize the deploy, removing the unfinished file and switching the symlink
+  deploy_helper:
+    path: "{{ rabbitmq_exporter_root_dir }}"
+    release: "{{ deploy_helper.new_release }}"
+    state: finalize
+  notify:
+    - restart rabbitmq_exporter
