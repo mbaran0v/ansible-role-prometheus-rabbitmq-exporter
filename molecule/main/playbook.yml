@@ -4,8 +4,5 @@
   hosts: all
   connection: local
 
-  vars_files:
-    - ../resources/vars/main.yaml
-
   roles:
     - role: ansible-role-prometheus-rabbitmq-exporter

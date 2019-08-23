@@ -5,7 +5,6 @@
 Ansible role for install and configure [Prometheus RabbitMQ Exporter](https://github.com/kbudde/rabbitmq_exporter). Currently this works on Debian and RedHat based linux systems. Tested platforms are:
 
 * Ubuntu 16.04
-* Debian 9
 * CentOS 7
 
 Requirements
@@ -35,8 +34,8 @@ rabbitmq_exporter_root_dir: /opt/rabbitmq_exporter
 directory for installation
 
 ```yaml
-rabbitmq_exporter_system_group: "rabbitmq-exp"
-rabbitmq_exporter_system_user: "{{ rabbitmq_exporter_system_group }}"
+rabbitmq_exporter_user: "rabbitmq-exp"
+rabbitmq_exporter_group: "{{ rabbitmq_exporter_user }}"
 ```
 user and group for service
 
@@ -56,8 +55,6 @@ None
 
 Example Playbook
 ----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
 ```yaml
 - hosts: app
