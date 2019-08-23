@@ -8,12 +8,14 @@ rabbitmq_exporter_download_url: "https://github.com/kbudde/rabbitmq_exporter/rel
 rabbitmq_exporter_archive_name: "{{ rabbitmq_exporter_extracted_dir }}.tar.gz"
 rabbitmq_exporter_extracted_dir: "rabbitmq_exporter-{{ rabbitmq_exporter_version }}.linux-{{ go_arch_map[ansible_architecture] | default(ansible_architecture) }}"
 
+rabbitmq_exporter_force_install: false
+
 rabbitmq_exporter_root_dir: /opt/rabbitmq_exporter
 rabbitmq_exporter_release_dir: "{{ rabbitmq_exporter_root_dir }}/current"
 rabbitmq_exporter_shared_dir: "{{ rabbitmq_exporter_root_dir }}/shared"
 
-rabbitmq_exporter_system_group: "rabbitmq-exp"
-rabbitmq_exporter_system_user: "{{ rabbitmq_exporter_system_group }}"
+rabbitmq_exporter_user: rabbitmq-exp
+rabbitmq_exporter_group: "{{ rabbitmq_exporter_user }}"
 
 # see https://github.com/kbudde/rabbitmq_exporter#configuration
 rabbitmq_exporter_config_vars: |
